@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>За теб 💌</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #ffe0f0 50%, #ffd4e8 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Floating hearts background */
+        .heart-bg {
+            position: fixed;
+            font-size: 20px;
+            opacity: 0.1;
+            animation: float 15s infinite ease-in-out;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Postcard closed state */
+        .postcard {
+            width: clamp(400px, 90vw, 700px);
+            height: clamp(280px, 65vw, 520px);
+            position: relative;
+            perspective: 1200px;
+        }
+
+        .postcard.opened {
+            cursor: default;
+        }
+
+        /* Card front (envelope) */
+        .card-front {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: left center;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2;
+            cursor: pointer;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .front-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff9eb5 0%, #ffb3c6 100%);
+            border-radius: 20px;
+            border: 3px solid #fff;
+            box-shadow: 0 15px 40px rgba(255, 105, 180, 0.3);
+            z-index: 1;
+        }
+
+        .front-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .postcard.opened .card-front {
+            transform: rotateY(-160deg);
+        }
+
+        .card-front:hover:not(.postcard.opened .card-front) .front-bg {
+            filter: brightness(1.05);
+        }
+
+        .card-front h1 {
+            font-size: 2.5em;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .card-front p {
+            font-size: 1.2em;
+            color: #fff;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        /* Card back (inside content) */
+        .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border: 3px solid #ffb3c6;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+
+        .card-back h2 {
+            color: #ff6b9d;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .card-back .message {
+            color: #555;
+            font-size: 1.05em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Signature section */
+        .signature-section {
+            margin: 20px 0;
+        }
+
+        .signature-section h3 {
+            color: #ff6b9d;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #signatureCanvas {
+            border: 2px dashed #ffb3c6;
+            border-radius: 10px;
+            cursor: crosshair;
+            display: block;
+            margin: 0 auto 10px;
+            background: #fffbfc;
+            touch-action: none;
+        }
+
+        .canvas-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .canvas-btn {
+            padding: 8px 16px;
+            background: #fff;
+            border: 2px solid #ffb3c6;
+            color: #ff6b9d;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .canvas-btn:hover {
+            background: #fff0f5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 105, 180, 0.2);
+        }
+
+        .canvas-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff8fb3 100%);
+            color: #fff;
+        }
+
+        .btn-yes:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-no {
+            background: #f0f0f0;
+            color: #999;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .btn-no:hover {
+            background: #e8e8e8;
+        }
+
+        /* Celebration overlay */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .celebration.active {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .celebration h1 {
+            font-size: 3em;
+            color: #ff6b9d;
+            margin-bottom: 20px;
+            animation: bounce 0.6s ease infinite;
+        }
+
+        .celebration p {
+            font-size: 1.5em;
+            color: #ff8fb3;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Floating hearts animation */
+        .heart {
+            position: fixed;
+            font-size: 30px;
+            animation: rise 3s ease-in forwards;
+            pointer-events: none;
+            z-index: 1001;
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .postcard {
+                width: 90vw;
+                max-width: 400px;
+                height: auto;
+                min-height: 280px;
+            }
+
+            .card-front h1 {
+                font-size: 2em;
+            }
+
+            .card-front p {
+                font-size: 1em;
+            }
+
+            .card-back {
+                padding: 20px;
+            }
+
+            .card-back h2 {
+                font-size: 1.4em;
+            }
+
+            .card-back .message {
+                font-size: 0.95em;
+            }
+
+            .btn {
+                padding: 10px 25px;
+                font-size: 1em;
+            }
+
+            .celebration h1 {
+                font-size: 2em;
+            }
+
+            .celebration p {
+                font-size: 1.2em;
+            }
+
+            #signatureCanvas {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-height: 650px) {
+            .postcard {
+                height: auto;
+                max-height: 85vh;
+            }
+
+            .card-back {
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b9d;
+            position: fixed;
+            animation: confetti-fall 3s ease-in forwards;
+            z-index: 1001;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotateZ(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotateZ(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background hearts -->
+    <div class="heart-bg" style="top: 10%; left: 10%;">💕</div>
+    <div class="heart-bg" style="top: 70%; left: 80%; animation-delay: 2s;">💖</div>
+    <div class="heart-bg" style="top: 30%; left: 85%; animation-delay: 4s;">💗</div>
+    <div class="heart-bg" style="top: 60%; left: 15%; animation-delay: 1s;">💓</div>
+    <div class="heart-bg" style="top: 85%; left: 50%; animation-delay: 3s;">💘</div>
+
+    <!-- Main container -->
+    <div class="container">
+        <div class="postcard" id="postcard">
+            <!-- Front of card (closed envelope) -->
+            <div class="card-front">
+                <div class="front-bg"></div>
+                <div class="front-content">
+                    <h1>За теб 💌</h1>
+                    <p>Отвори ме...</p>
+                </div>
+            </div>
+
+            <!-- Back of card (inside content) -->
+            <div class="card-back">
+                <h2>Скъпа моя, 💕</h2>
+                <p class="message">
+                    В този специален ден искам да ти кажа колко безкрайно много значиш за мен.
+Всяка твоя усмивка и всеки миг, прекаран с теб, са най-ценното съкровище в живота ми.
+Ти озаряваш дните ми и ги правиш по-ярки, по-топли и по-красиви.
+                    <br><br>
+                    Ще бъдеш ли моята Валентинка? 💖
+                </p>
+
+                <!-- Signature canvas -->
+                <div class="signature-section">
+                    <h3>Подпиши с пръст или мишка:</h3>
+                    <canvas id="signatureCanvas" width="300" height="120"></canvas>
+                    <div class="canvas-controls">
+                        <button class="canvas-btn" id="clearBtn">✖ Изчисти</button>
+                        <button class="canvas-btn" id="saveBtn">💾 Запази</button>
+                    </div>
+                </div>
+
+                <!-- Yes/No buttons -->
+                <div class="buttons">
+                    <button class="btn btn-yes" id="yesBtn">Да 💖</button>
+                    <button class="btn btn-no" id="noBtn">Не 🙃</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration overlay -->
+    <div class="celebration" id="celebration">
+        <h1>Официално е! 💘</h1>
+        <p>Най-добрият Свети Валентин!<br>Обичам те безкрайно много! 💕✨</p>
+    </div>
+
+    <script>
+        // Card opening animation
+        const postcard = document.getElementById('postcard');
+        const cardFront = document.querySelector('.card-front');
+        
+        cardFront.addEventListener('click', function(e) {
+            if (!postcard.classList.contains('opened')) {
+                postcard.classList.add('opened');
+            }
+        });
+
+        // Signature canvas functionality
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Set canvas drawing style
+        ctx.strokeStyle = '#ff6b9d';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Get coordinates relative to canvas
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            if (e.touches) {
+                return {
+                    x: (e.touches[0].clientX - rect.left) * scaleX,
+                    y: (e.touches[0].clientY - rect.top) * scaleY
+                };
+            } else {
+                return {
+                    x: (e.clientX - rect.left) * scaleX,
+                    y: (e.clientY - rect.top) * scaleY
+                };
+            }
+        }
+
+        // Start drawing
+        function startDrawing(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const coords = getCoordinates(e);
+            lastX = coords.x;
+            lastY = coords.y;
+        }
+
+        // Draw on canvas
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            
+            const coords = getCoordinates(e);
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(coords.x, coords.y);
+            ctx.stroke();
+            
+            lastX = coords.x;
+            lastY = coords.y;
+        }
+
+        // Stop drawing
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+
+        // Clear canvas button
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        // Save canvas button
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'моят-подпис.png';
+            link.href = dataURL;
+            link.click();
+        });
+
+        // Yes button - celebration
+        const yesBtn = document.getElementById('yesBtn');
+        const celebration = document.getElementById('celebration');
+
+        yesBtn.addEventListener('click', function() {
+            celebration.classList.add('active');
+            createHearts();
+            createConfetti();
+        });
+
+        // No button - playful rejection
+        const noBtn = document.getElementById('noBtn');
+        const cardBack = document.querySelector('.card-back');
+        let noClickCount = 0;
+
+        noBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            noClickCount++;
+
+            if (noClickCount === 1) {
+                noBtn.textContent = 'Сигурна ли си? 🥺';
+            } else if (noClickCount === 2) {
+                noBtn.textContent = 'Моля те... 💔';
+            } else if (noClickCount === 3) {
+                noBtn.textContent = 'Последен шанс! 😢';
+            } else {
+                // Move button to random position within card-back bounds
+                const cardRect = cardBack.getBoundingClientRect();
+                const btnWidth = noBtn.offsetWidth;
+                const btnHeight = noBtn.offsetHeight;
+                
+                // Calculate max positions within card-back, accounting for padding
+                const maxX = cardRect.width - btnWidth - 60;
+                const maxY = cardRect.height - btnHeight - 60;
+                
+                // Clamp to ensure button stays within bounds
+                const randomX = Math.max(30, Math.random() * maxX);
+                const randomY = Math.max(30, Math.random() * maxY);
+                
+                noBtn.style.position = 'absolute';
+                noBtn.style.left = randomX + 'px';
+                noBtn.style.top = randomY + 'px';
+                noBtn.textContent = 'Не мога да те хвана! 😅';
+            }
+        });
+
+        // Create floating hearts
+        function createHearts() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.className = 'heart';
+                    heart.textContent = ['💕', '💖', '💗', '💓', '💘'][Math.floor(Math.random() * 5)];
+                    heart.style.left = Math.random() * window.innerWidth + 'px';
+                    heart.style.top = window.innerHeight + 'px';
+                    heart.style.fontSize = (Math.random() * 20 + 20) + 'px';
+                    document.body.appendChild(heart);
+                    
+                    setTimeout(() => {
+                        heart.remove();
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+
+        // Create confetti
+        function createConfetti() {
+            const colors = ['#ff6b9d', '#ff8fb3', '#ffc0cb', '#ffb3c6', '#ff69b4'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * window.innerWidth + 'px';
+                    confetti.style.top = '-10px';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                    confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 30);
+            }
+        }
+
+        // Close celebration on click
+        celebration.addEventListener('click', function() {
+            celebration.classList.remove('active');
+        });
+    </script>
+</body>
+</html>
